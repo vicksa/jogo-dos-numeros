@@ -42,7 +42,9 @@ function getLevelConfig(level) {
   }
 }
 
-app.post('/api/game/start', async (req, res) => {
+const router = express.Router();
+
+router.post('/game/start', async (req, res) => {
   try {
     const { playerName, level } = req.body;
     const name = (playerName && playerName.trim()) ? playerName.trim().substring(0, 50) : 'Jogador';
@@ -81,7 +83,7 @@ app.post('/api/game/start', async (req, res) => {
   }
 });
 
-app.post('/api/game/guess', async (req, res) => {
+router.post('/game/guess', async (req, res) => {
   try {
     const { gameId, guess } = req.body;
     if (!gameId) {
@@ -188,7 +190,7 @@ app.post('/api/game/guess', async (req, res) => {
   }
 });
 
-app.get('/api/ranking', async (req, res) => {
+router.get('/ranking', async (req, res) => {
   try {
     const level = req.query.level ? parseInt(req.query.level, 10) : null;
     let query = '';
@@ -219,5 +221,9 @@ app.get('/api/ranking', async (req, res) => {
     res.status(500).json({ error: 'Erro ao consultar o ranking.' });
   }
 });
+
+// Suporta tanto requisições diretas /api/* quanto requisições onde o host remove o prefixo /api
+app.use('/api', router);
+app.use('/', router);
 
 module.exports = app;

@@ -102,6 +102,22 @@ function setMascotState(stateKey, customSpeech = null) {
   if (speechText) speechText.textContent = customSpeech || state.speech;
 }
 
+async function requestApi(url, options = {}) {
+  const res = await fetch(url, options);
+  const contentType = res.headers.get('content-type') || '';
+  let data;
+  if (contentType.includes('application/json')) {
+    data = await res.json();
+  } else {
+    const text = await res.text();
+    throw new Error(`Servidor retornou resposta inesperada (${res.status}): ${text.substring(0, 80)}`);
+  }
+  if (!res.ok) {
+    throw new Error(data.error || 'Erro na requisição');
+  }
+  return data;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   if (gameState.playerName) {
     playerNameInput.value = gameState.playerName;
@@ -159,7 +175,7 @@ async function startGame() {
 async function startLevel(level) {
   try {
     btnStart.disabled = true;
-    const res = await fetch('/api/game/start', {
+    const data = await requestApi('/api/game/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -167,9 +183,6 @@ async function startLevel(level) {
         level: level
       })
     });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Erro ao iniciar');
 
     gameState.gameId = data.gameId;
     gameState.selectedLevel = data.level;
@@ -221,7 +234,7 @@ async function handleGuess(e) {
   btnGuess.disabled = true;
 
   try {
-    const res = await fetch('/api/game/guess', {
+    const data = await requestApi('/api/game/guess', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -229,9 +242,6 @@ async function handleGuess(e) {
         guess: guess
       })
     });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Erro no palpite');
 
     gameState.attempts = data.attempts;
     attemptCountDisplay.textContent = data.attempts;
@@ -343,10 +353,7 @@ async function loadRanking() {
       url += `?level=${currentRankFilter}`;
     }
 
-    const res = await fetch(url);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error);
-
+    const data = await requestApi(url);
     renderRankingTable(data.ranking);
   } catch (err) {
     rankingBody.innerHTML = `
