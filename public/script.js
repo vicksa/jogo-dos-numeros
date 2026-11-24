@@ -10,7 +10,34 @@ let gameState = {
   isWon: false
 };
 
+// Imagens da Kuromi para reações
+const KUROMI_MOODS = {
+  start: {
+    img: 'assets/kuromi-1.jpg',
+    speech: 'Oii! Pronta(o) para jogar? Escolha o nível e tente descobrir meu número secreto! 🖤🎀'
+  },
+  thinking: {
+    img: 'assets/kuromi-2.jpg',
+    speech: 'Hmm... em qual número você está pensando? Digite seu palpite! 💭'
+  },
+  higher: {
+    img: 'assets/kuromi-3.jpg',
+    speech: 'Hihi! O meu número secreto é MAIOR que esse! Chute mais alto! 📈🖤'
+  },
+  lower: {
+    img: 'assets/kuromi-3.jpg',
+    speech: 'Passou perto! O meu número secreto é MENOR que esse! Tente mais baixo! 📉🎀'
+  },
+  win: {
+    img: 'assets/kuromi-1.jpg',
+    speech: 'UAU! Você é incrível! Acertou o número e entrou pro Hall da Fama no Neon! 🎉✨'
+  }
+};
+
 // Elementos do DOM
+const mascotImg = document.getElementById('mascot-img');
+const speechText = document.getElementById('speech-text');
+
 const setupPanel = document.getElementById('setup-panel');
 const playPanel = document.getElementById('play-panel');
 const playerNameInput = document.getElementById('player-name');
@@ -42,7 +69,7 @@ const rankingBody = document.getElementById('ranking-body');
 const btnRefreshRanking = document.getElementById('btn-refresh-ranking');
 let currentRankFilter = 'all';
 
-// Áudio sintético via Web Audio API (sem dependências externas)
+// Áudio sintético kawaii via Web Audio API
 const audioCtx = (window.AudioContext || window.webkitAudioContext) ? new (window.AudioContext || window.webkitAudioContext)() : null;
 
 function playTone(freq, type = 'sine', duration = 0.15) {
@@ -66,10 +93,16 @@ function playTone(freq, type = 'sine', duration = 0.15) {
 
 function playWinSound() {
   if (!audioCtx) return;
-  const notes = [440, 554.37, 659.25, 880];
+  const notes = [523.25, 659.25, 783.99, 1046.50]; // Acorde Dó maior agudo brilhante
   notes.forEach((freq, idx) => {
-    setTimeout(() => playTone(freq, 'triangle', 0.3), idx * 120);
+    setTimeout(() => playTone(freq, 'triangle', 0.28), idx * 110);
   });
+}
+
+function setKuromiMood(moodKey, customSpeech = null) {
+  const mood = KUROMI_MOODS[moodKey] || KUROMI_MOODS.start;
+  if (mascotImg) mascotImg.src = mood.img;
+  if (speechText) speechText.textContent = customSpeech || mood.speech;
 }
 
 // Inicialização
@@ -115,13 +148,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Carrega ranking inicial
+  // Carrega ranking inicial do Neon
   loadRanking();
 });
 
 // Iniciar Partida
 async function startGame() {
-  const name = playerNameInput.value.trim() || 'Jogador Anônimo';
+  const name = playerNameInput.value.trim() || 'Fã da Kuromi';
   gameState.playerName = name;
   localStorage.setItem('player_name', name);
 
@@ -168,6 +201,8 @@ async function startLevel(level) {
     victoryActions.classList.add('hidden');
     renderHistory();
 
+    setKuromiMood('thinking', `Estou pensando em um número de ${data.min} a ${data.max}... Qual o seu palpite, ${gameState.playerName}? 🎀`);
+
     setupPanel.classList.add('hidden');
     playPanel.classList.remove('hidden');
 
@@ -212,11 +247,13 @@ async function handleGuess(e) {
     renderHistory();
 
     if (data.status === 'higher') {
-      playTone(550, 'sine', 0.15); // Tom agudo para indicar "mais alto"
-      showFeedback('higher', data.message, '📈');
+      playTone(587.33, 'sine', 0.16); // Tom agudo
+      showFeedback('higher', `📈 O número secreto da Kuromi é MAIOR que ${guess}. Tente novamente!`, '📈');
+      setKuromiMood('higher', `Hihi! O número que eu escolhi é MAIOR que ${guess}! 🖤`);
     } else if (data.status === 'lower') {
-      playTone(280, 'sine', 0.15); // Tom grave para indicar "mais baixo"
-      showFeedback('lower', data.message, '📉');
+      playTone(293.66, 'sine', 0.16); // Tom grave
+      showFeedback('lower', `📉 O número secreto da Kuromi é MENOR que ${guess}. Tente novamente!`, '📉');
+      setKuromiMood('lower', `Quase! O número secreto é MENOR que ${guess}! Chute mais baixo! 🎀`);
     } else if (data.status === 'correct') {
       handleVictory(data);
     }
@@ -243,11 +280,13 @@ function handleVictory(data) {
   playWinSound();
   launchConfetti();
 
-  let victoryMsg = data.message;
+  let victoryMsg = `🎉 Parabéns, ${gameState.playerName}! Você acertou o número secreto (${data.secretNumber}) em ${data.attempts} ${data.attempts === 1 ? 'tentativa' : 'tentativas'}!`;
   if (data.rankPosition) {
-    victoryMsg += ` 🏆 Você está na posição #${data.rankPosition} do ranking do Neon!`;
+    victoryMsg += ` 🏆 Você garantiu a posição #${data.rankPosition} no ranking do Neon!`;
   }
-  showFeedback('correct', victoryMsg, '🎉');
+  showFeedback('correct', victoryMsg, '🖤');
+
+  setKuromiMood('win', `Aee! Você acertou em ${data.attempts} ${data.attempts === 1 ? 'tentativa' : 'tentativas'}! Já registrei seu recorde no Neon! 🖤✨`);
 
   // Ajustar botão de próximo nível
   if (gameState.selectedLevel < 3) {
@@ -259,22 +298,22 @@ function handleVictory(data) {
 
   victoryActions.classList.remove('hidden');
 
-  // Recarregar ranking para mostrar o novo recorde
+  // Recarrega ranking atualizado
   loadRanking();
 }
 
-// Avançar para próximo nível
+// Próximo nível
 function handleNextLevel() {
   if (gameState.selectedLevel < 3) {
     startLevel(gameState.selectedLevel + 1);
   }
 }
 
-// Voltar para configuração
+// Voltar para tela de setup
 function exitToSetup() {
   playPanel.classList.add('hidden');
   setupPanel.classList.remove('hidden');
-  // Atualiza botões de nível com base no atual
+  setKuromiMood('start');
   levelBtns.forEach(b => {
     b.classList.toggle('active', parseInt(b.dataset.level, 10) === gameState.selectedLevel);
   });
@@ -293,7 +332,7 @@ function renderHistory() {
     let icon = '•';
     if (item.status === 'higher') icon = '📈 Maior';
     else if (item.status === 'lower') icon = '📉 Menor';
-    else if (item.status === 'correct') icon = '🎯 Acertou!';
+    else if (item.status === 'correct') icon = '🖤 Acertou!';
 
     return `
       <div class="history-pill ${item.status}">
@@ -304,7 +343,7 @@ function renderHistory() {
   }).join('');
 }
 
-// Exibir Feedback
+// Feedback
 function showFeedback(type, text, icon = '💡') {
   feedbackBox.className = `feedback-box ${type}`;
   feedbackIcon.textContent = icon;
@@ -327,7 +366,7 @@ async function loadRanking() {
   } catch (err) {
     rankingBody.innerHTML = `
       <tr>
-        <td colspan="4" class="ranking-loading" style="color: var(--neon-rose);">
+        <td colspan="4" class="ranking-loading" style="color: var(--pink-hot);">
           Falha ao carregar ranking do Neon: ${err.message}
         </td>
       </tr>
@@ -340,7 +379,7 @@ function renderRankingTable(items) {
     rankingBody.innerHTML = `
       <tr>
         <td colspan="4" class="ranking-loading">
-          Nenhum registro ainda. Seja o primeiro a acertar e entrar para o Hall da Fama!
+          Nenhum registro ainda. Seja o primeiro a acertar e entrar para o Hall da Fama Kuromi! 🎀
         </td>
       </tr>
     `;
@@ -351,11 +390,11 @@ function renderRankingTable(items) {
     const pos = index + 1;
     let posBadge = `${pos}º`;
     let posClass = 'rank-pos';
-    if (pos === 1) { posBadge = '🥇 1º'; posClass += ' pos-1'; }
+    if (pos === 1) { posBadge = '👑 1º'; posClass += ' pos-1'; }
     else if (pos === 2) { posBadge = '🥈 2º'; posClass += ' pos-2'; }
     else if (pos === 3) { posBadge = '🥉 3º'; posClass += ' pos-3'; }
 
-    const avatarLetter = (item.player_name || 'A').charAt(0).toUpperCase();
+    const avatarLetter = (item.player_name || 'K').charAt(0).toUpperCase();
 
     return `
       <tr>
@@ -383,7 +422,7 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-// Confetti Particle System
+// Confetti com cores da Kuromi (Hot Pink, Lilac, Soft Pink, White, Dark Violet)
 function launchConfetti() {
   const canvas = document.getElementById('confetti-canvas');
   if (!canvas) return;
@@ -392,15 +431,15 @@ function launchConfetti() {
   canvas.height = window.innerHeight;
 
   const particles = [];
-  const colors = ['#00e599', '#00d2ff', '#a855f7', '#ffd700', '#f43f5e'];
+  const colors = ['#ff4d8d', '#ff75a0', '#c084fc', '#ffd1dc', '#ffffff', '#2a1b32'];
 
-  for (let i = 0; i < 90; i++) {
+  for (let i = 0; i < 95; i++) {
     particles.push({
       x: canvas.width / 2,
       y: canvas.height / 2,
       vx: (Math.random() - 0.5) * 16,
       vy: (Math.random() - 0.7) * 16,
-      size: Math.random() * 8 + 4,
+      size: Math.random() * 9 + 4,
       color: colors[Math.floor(Math.random() * colors.length)],
       alpha: 1,
       rotation: Math.random() * 360,
@@ -416,7 +455,7 @@ function launchConfetti() {
     particles.forEach(p => {
       p.x += p.vx;
       p.y += p.vy;
-      p.vy += 0.35; // gravidade
+      p.vy += 0.35;
       p.alpha -= 0.012;
       p.rotation += p.rotSpeed;
 
