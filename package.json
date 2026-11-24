@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node --check server.js api/index.js db.js"
+    "test": "node --check server.js api/game/start.js api/game/guess.js api/ranking.js db.js"
   },
   "keywords": [
     "jogo",
