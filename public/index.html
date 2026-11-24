@@ -3,228 +3,202 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kuromi • Jogo dos Números 🖤🎀</title>
+  <title>Kuromi — Jogo dos Números</title>
+  <meta name="description" content="Jogo de adivinhação de números temático da Kuromi com 3 níveis de dificuldade e placar de recordes por tentativas.">
+  <meta property="og:title" content="Kuromi — Jogo dos Números">
+  <meta property="og:description" content="Adivinhe o número secreto nos 3 níveis e entre para o placar de recordes.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_BR">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@500;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="kuromi-theme">
-  <!-- Fundo com brilho e corações/bolinhas flutuantes -->
-  <div class="background-decorations">
-    <div class="decor-circle circle-1"></div>
-    <div class="decor-circle circle-2"></div>
-    <div class="decor-skull skull-1">💀</div>
-    <div class="decor-heart heart-1">🖤</div>
-    <div class="decor-bow bow-1">🎀</div>
-    <div class="decor-skull skull-2">💀</div>
-    <div class="decor-heart heart-2">🩷</div>
+  <div class="ambient-layer" aria-hidden="true">
+    <div class="ambient-glow ambient-glow-primary"></div>
+    <div class="ambient-glow ambient-glow-secondary"></div>
   </div>
   
-  <canvas id="confetti-canvas"></canvas>
+  <canvas id="confetti-canvas" aria-hidden="true"></canvas>
 
   <div class="container">
-    <!-- Header Kuromi -->
     <header class="app-header">
       <div class="brand">
-        <div class="kuromi-avatar-frame">
-          <img id="header-avatar" src="assets/kuromi-1.jpg" alt="Kuromi" class="kuromi-header-img">
+        <div class="avatar-frame">
+          <img id="header-avatar" src="assets/kuromi-1.jpg" alt="Mascote Kuromi" class="avatar-image">
         </div>
         <div>
-          <div class="title-with-badge">
-            <h1>Kuromi: Jogo dos Números</h1>
-            <span class="cute-tag">Pastel Goth 🖤</span>
-          </div>
-          <p class="subtitle">Descubra o número secreto em menos tentativas! 🎀</p>
+          <h1>Kuromi: Jogo dos Números</h1>
+          <p class="subtitle">Descubra o número secreto com a menor quantidade de tentativas.</p>
         </div>
-      </div>
-      <div class="neon-badge">
-        <span class="status-dot"></span>
-        <span>Neon Postgres Live</span>
       </div>
     </header>
 
-    <!-- Main Grid -->
     <main class="main-grid">
-      <!-- Coluna Esquerda: O Jogo -->
-      <section class="game-card">
-        
-        <!-- Mascote Kuromi Reativa -->
-        <div class="kuromi-mascot-bar">
-          <div class="mascot-img-wrap">
-            <img id="mascot-img" src="assets/kuromi-2.jpg" alt="Kuromi Reação" class="mascot-img">
+      <section class="game-card" aria-labelledby="game-title">
+        <div class="mascot-card">
+          <div class="mascot-frame">
+            <img id="mascot-img" src="assets/kuromi-2.jpg" alt="Expressão atual da Kuromi" class="mascot-image">
           </div>
-          <div class="kuromi-speech-bubble" id="kuromi-bubble">
-            <span id="speech-text">Oii! Vamos jogar? Escolha seu nível e tente adivinhar meu número secreto! 🖤</span>
+          <div class="mascot-dialog" id="kuromi-bubble">
+            <p id="speech-text">Escolha um nível e tente descobrir qual número eu escolhi.</p>
           </div>
         </div>
 
-        <!-- Painel de Setup Inicial -->
         <div id="setup-panel" class="panel">
           <div class="panel-header">
-            <h2>🎀 Nova Partida</h2>
-            <p>Digite seu nome e escolha o nível de desafio com a Kuromi.</p>
+            <h2 id="game-title">Iniciar Partida</h2>
+            <p>Informe seu nome e defina a faixa de valores para começar.</p>
           </div>
 
           <div class="form-group">
-            <label for="player-name">🖤 Seu Nome ou Apelido</label>
-            <input type="text" id="player-name" placeholder="Ex: Vick, Kuromi Fan..." maxlength="30" autocomplete="off">
+            <label for="player-name">Nome do Jogador</label>
+            <input type="text" id="player-name" placeholder="Digite seu nome ou apelido" maxlength="30" autocomplete="off">
           </div>
 
           <div class="form-group">
-            <label>💀 Escolha a Dificuldade</label>
-            <div class="level-selector">
-              <button type="button" class="level-btn active" data-level="1">
+            <label id="level-label">Dificuldade</label>
+            <div class="level-selector" role="radiogroup" aria-labelledby="level-label">
+              <button type="button" class="level-btn active" data-level="1" role="radio" aria-checked="true">
                 <span class="level-tag">Nível 1</span>
                 <span class="level-range">1 a 10</span>
-                <span class="level-desc">Fácil & Rápido 🎀</span>
+                <span class="level-desc">Iniciante</span>
               </button>
-              <button type="button" class="level-btn" data-level="2">
+              <button type="button" class="level-btn" data-level="2" data-level-val="2" role="radio" aria-checked="false">
                 <span class="level-tag">Nível 2</span>
                 <span class="level-range">1 a 100</span>
-                <span class="level-desc">Clássico 💜</span>
+                <span class="level-desc">Intermediário</span>
               </button>
-              <button type="button" class="level-btn" data-level="3">
+              <button type="button" class="level-btn" data-level="3" role="radio" aria-checked="false">
                 <span class="level-tag">Nível 3</span>
                 <span class="level-range">1 a 1000</span>
-                <span class="level-desc">Desafio Kuromi 💀</span>
+                <span class="level-desc">Avançado</span>
               </button>
             </div>
           </div>
 
-          <button id="btn-start" class="btn btn-kuromi btn-block">
-            <span>Começar Desafio</span> 🎀
+          <button id="btn-start" class="btn btn-primary btn-block">
+            <span>Iniciar Desafio</span>
           </button>
         </div>
 
-        <!-- Área de Jogo Ativa -->
         <div id="play-panel" class="panel hidden">
-          <div class="game-status-bar">
-            <div class="status-item">
-              <span class="status-label">Jogador</span>
-              <span id="current-player" class="status-value">-</span>
+          <div class="stats-bar">
+            <div class="stat-item">
+              <span class="stat-label">Jogador</span>
+              <span id="current-player" class="stat-value">-</span>
             </div>
-            <div class="status-item">
-              <span class="status-label">Dificuldade</span>
+            <div class="stat-item">
+              <span class="stat-label">Dificuldade</span>
               <span id="current-level-badge" class="badge-level">Nível 1</span>
             </div>
-            <div class="status-item">
-              <span class="status-label">Tentativas</span>
-              <span id="attempt-count" class="status-value counter">0</span>
+            <div class="stat-item">
+              <span class="stat-label">Tentativas</span>
+              <span id="attempt-count" class="stat-value counter">0</span>
             </div>
           </div>
 
-          <div class="target-range-box">
-            <div class="range-hint">O número secreto da Kuromi está entre</div>
-            <div class="range-display">
-              <span id="range-min" class="range-num">1</span>
-              <span class="range-sep">🎀 até 🎀</span>
-              <span id="range-max" class="range-num">10</span>
+          <div class="range-box">
+            <span class="range-label">Intervalo da rodada</span>
+            <div class="range-values">
+              <span id="range-min" class="range-val">1</span>
+              <span class="range-separator">até</span>
+              <span id="range-max" class="range-val">10</span>
             </div>
           </div>
 
-          <!-- Formulário de Palpite -->
           <form id="guess-form" class="guess-form">
-            <div class="input-action-wrapper">
+            <div class="input-row">
               <input 
                 type="number" 
                 id="guess-input" 
                 class="guess-input" 
-                placeholder="Seu palpite aqui" 
+                placeholder="Seu palpite" 
                 min="1" 
                 max="10" 
                 required
                 autocomplete="off"
+                aria-label="Palpite numérico"
               >
-              <button type="submit" id="btn-guess" class="btn btn-kuromi">
-                <span>Chutar</span> 💀
+              <button type="submit" id="btn-guess" class="btn btn-primary">
+                <span>Confirmar</span>
               </button>
             </div>
           </form>
 
-          <!-- Feedback Mensagem -->
-          <div id="feedback-box" class="feedback-box hidden">
-            <div id="feedback-icon" class="feedback-icon">💡</div>
-            <div id="feedback-text" class="feedback-text">Dica de palpite aqui</div>
+          <div id="feedback-box" class="feedback-box hidden" role="status" aria-live="polite">
+            <span id="feedback-icon" class="feedback-icon" aria-hidden="true">💡</span>
+            <span id="feedback-text" class="feedback-text"></span>
           </div>
 
-          <!-- Histórico de Palpites -->
-          <div class="history-section">
+          <div class="history-card">
             <div class="history-header">
-              <span>Histórico de Tentativas</span>
+              <span>Tentativas Anteriores</span>
               <span id="history-count" class="history-count">0 palpites</span>
             </div>
             <div id="history-list" class="history-list">
-              <div class="empty-history">Nenhum palpite enviado ainda.</div>
+              <span class="empty-history">Nenhum palpite enviado ainda.</span>
             </div>
           </div>
 
-          <!-- Ações de Vitória / Desistência -->
           <div id="victory-actions" class="victory-actions hidden">
-            <button id="btn-next-level" class="btn btn-kuromi">
-              <span>Próximo Nível</span> ⏩
+            <button id="btn-next-level" class="btn btn-primary">
+              <span>Avançar de Nível</span>
             </button>
-            <button id="btn-restart" class="btn btn-outline">
-              <span>Jogar Novamente</span> 🔄
+            <button id="btn-restart" class="btn btn-secondary">
+              <span>Jogar Novamente</span>
             </button>
           </div>
           
-          <div class="game-footer-actions">
-            <button id="btn-give-up" class="btn-text">Trocar de Nível / Voltar</button>
+          <div class="action-footer">
+            <button id="btn-give-up" class="btn-link">Trocar de Nível / Voltar ao Início</button>
           </div>
         </div>
       </section>
 
-      <!-- Coluna Direita: Ranking no Neon -->
-      <section class="ranking-card">
+      <section class="ranking-card" aria-labelledby="ranking-title">
         <div class="ranking-header">
-          <div class="ranking-title-group">
-            <div class="ranking-skull-icon">💀</div>
-            <div>
-              <h2>Hall da Fama Kuromi</h2>
-              <p>Menos tentativas = Melhor posição no Neon 🖤</p>
-            </div>
+          <div>
+            <h2 id="ranking-title">Placar de Recordes</h2>
+            <p>Classificação baseada no menor número de tentativas.</p>
           </div>
-          <button id="btn-refresh-ranking" class="btn-icon" title="Atualizar Ranking">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <button id="btn-refresh-ranking" class="btn-icon" aria-label="Atualizar classificação">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
             </svg>
           </button>
         </div>
 
-        <!-- Filtros de Dificuldade do Ranking -->
-        <div class="ranking-tabs">
-          <button class="rank-tab active" data-filter="all">Todos 🎀</button>
-          <button class="rank-tab" data-filter="1">Nível 1 (1-10)</button>
-          <button class="rank-tab" data-filter="2">Nível 2 (1-100)</button>
-          <button class="rank-tab" data-filter="3">Nível 3 (1-1000)</button>
+        <div class="tab-group" role="tablist" aria-label="Filtrar por nível">
+          <button class="tab-item active" data-filter="all" role="tab" aria-selected="true">Geral</button>
+          <button class="tab-item" data-filter="1" role="tab" aria-selected="false">Nível 1</button>
+          <button class="tab-item" data-filter="2" role="tab" aria-selected="false">Nível 2</button>
+          <button class="tab-item" data-filter="3" role="tab" aria-selected="false">Nível 3</button>
         </div>
 
-        <!-- Lista de Melhores Jogadores -->
-        <div class="ranking-table-container">
-          <table class="ranking-table">
+        <div class="table-wrapper">
+          <table class="data-table">
             <thead>
               <tr>
-                <th style="width: 50px;">Pos</th>
-                <th>Jogador</th>
-                <th>Nível</th>
-                <th style="text-align: right;">Tentativas</th>
+                <th scope="col" style="width: 50px;">Pos</th>
+                <th scope="col">Jogador</th>
+                <th scope="col">Nível</th>
+                <th scope="col" style="text-align: right;">Tentativas</th>
               </tr>
             </thead>
             <tbody id="ranking-body">
               <tr>
-                <td colspan="4" class="ranking-loading">Carregando dados do Neon...</td>
+                <td colspan="4" class="table-status">Carregando classificação...</td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <div class="ranking-footer">
-          <div class="neon-db-info">
-            <span class="db-dot"></span>
-            <span>Registrado no Neon Serverless Postgres com o estilo da Kuromi 🖤</span>
-          </div>
-        </div>
+        <footer class="table-footer">
+          <span>Os recordes são registrados automaticamente após cada acerto.</span>
+        </footer>
       </section>
     </main>
   </div>

@@ -34,9 +34,8 @@ async function initDb() {
   `;
   try {
     await pool.query(query);
-    console.log('✅ Tabelas do Neon (ranking e active_games) verificadas com sucesso!');
   } catch (err) {
-    console.error('❌ Erro ao inicializar tabelas no Neon:', err);
+    console.error('Database initialization error:', err);
     throw err;
   }
 }

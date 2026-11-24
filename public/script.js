@@ -1,5 +1,4 @@
-// Estado global da aplicação
-let gameState = {
+const gameState = {
   gameId: null,
   playerName: localStorage.getItem('player_name') || '',
   selectedLevel: 1,
@@ -10,31 +9,29 @@ let gameState = {
   isWon: false
 };
 
-// Imagens da Kuromi para reações
-const KUROMI_MOODS = {
+const mascotStates = {
   start: {
     img: 'assets/kuromi-1.jpg',
-    speech: 'Oii! Pronta(o) para jogar? Escolha o nível e tente descobrir meu número secreto! 🖤🎀'
+    speech: 'Escolha um nível e tente descobrir qual número eu escolhi.'
   },
   thinking: {
     img: 'assets/kuromi-2.jpg',
-    speech: 'Hmm... em qual número você está pensando? Digite seu palpite! 💭'
+    speech: 'Em qual número você está pensando? Digite seu palpite.'
   },
   higher: {
     img: 'assets/kuromi-3.jpg',
-    speech: 'Hihi! O meu número secreto é MAIOR que esse! Chute mais alto! 📈🖤'
+    speech: 'O número correto é MAIOR do que o seu palpite. Tente um valor mais alto.'
   },
   lower: {
     img: 'assets/kuromi-3.jpg',
-    speech: 'Passou perto! O meu número secreto é MENOR que esse! Tente mais baixo! 📉🎀'
+    speech: 'O número correto é MENOR do que o seu palpite. Tente um valor mais baixo.'
   },
   win: {
     img: 'assets/kuromi-1.jpg',
-    speech: 'UAU! Você é incrível! Acertou o número e entrou pro Hall da Fama no Neon! 🎉✨'
+    speech: 'Você acertou! Sua pontuação foi salva no placar de recordes.'
   }
 };
 
-// Elementos do DOM
 const mascotImg = document.getElementById('mascot-img');
 const speechText = document.getElementById('speech-text');
 
@@ -64,78 +61,78 @@ const btnNextLevel = document.getElementById('btn-next-level');
 const btnRestart = document.getElementById('btn-restart');
 const btnGiveUp = document.getElementById('btn-give-up');
 
-const rankTabs = document.querySelectorAll('.rank-tab');
+const rankTabs = document.querySelectorAll('.tab-item');
 const rankingBody = document.getElementById('ranking-body');
 const btnRefreshRanking = document.getElementById('btn-refresh-ranking');
 let currentRankFilter = 'all';
 
-// Áudio sintético kawaii via Web Audio API
 const audioCtx = (window.AudioContext || window.webkitAudioContext) ? new (window.AudioContext || window.webkitAudioContext)() : null;
 
 function playTone(freq, type = 'sine', duration = 0.15) {
   if (!audioCtx) return;
   try {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.type = type;
     osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
     osc.connect(gain);
     gain.connect(audioCtx.destination);
     osc.start();
     osc.stop(audioCtx.currentTime + duration);
   } catch (e) {
-    // áudio silencioso se bloqueado
   }
 }
 
 function playWinSound() {
   if (!audioCtx) return;
-  const notes = [523.25, 659.25, 783.99, 1046.50]; // Acorde Dó maior agudo brilhante
+  const notes = [523.25, 659.25, 783.99, 1046.50];
   notes.forEach((freq, idx) => {
-    setTimeout(() => playTone(freq, 'triangle', 0.28), idx * 110);
+    setTimeout(() => playTone(freq, 'triangle', 0.25), idx * 100);
   });
 }
 
-function setKuromiMood(moodKey, customSpeech = null) {
-  const mood = KUROMI_MOODS[moodKey] || KUROMI_MOODS.start;
-  if (mascotImg) mascotImg.src = mood.img;
-  if (speechText) speechText.textContent = customSpeech || mood.speech;
+function setMascotState(stateKey, customSpeech = null) {
+  const state = mascotStates[stateKey] || mascotStates.start;
+  if (mascotImg) mascotImg.src = state.img;
+  if (speechText) speechText.textContent = customSpeech || state.speech;
 }
 
-// Inicialização
 document.addEventListener('DOMContentLoaded', () => {
   if (gameState.playerName) {
     playerNameInput.value = gameState.playerName;
   }
   
-  // Seleção de nível no setup
   levelBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      levelBtns.forEach(b => b.classList.remove('active'));
+      levelBtns.forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-checked', 'false');
+      });
       btn.classList.add('active');
+      btn.setAttribute('aria-checked', 'true');
       gameState.selectedLevel = parseInt(btn.dataset.level, 10);
     });
   });
 
-  // Botão Começar Jogo
   btnStart.addEventListener('click', startGame);
-
-  // Formulário de palpite
   guessForm.addEventListener('submit', handleGuess);
-
-  // Ações de pós-jogo
   btnNextLevel.addEventListener('click', handleNextLevel);
   btnRestart.addEventListener('click', () => startLevel(gameState.selectedLevel));
   btnGiveUp.addEventListener('click', exitToSetup);
 
-  // Tabs do ranking
   rankTabs.forEach(tab => {
     tab.addEventListener('click', () => {
-      rankTabs.forEach(t => t.classList.remove('active'));
+      rankTabs.forEach(t => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+      });
       tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
       currentRankFilter = tab.dataset.filter;
       loadRanking();
     });
@@ -148,13 +145,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Carrega ranking inicial do Neon
   loadRanking();
 });
 
-// Iniciar Partida
 async function startGame() {
-  const name = playerNameInput.value.trim() || 'Fã da Kuromi';
+  const name = playerNameInput.value.trim() || 'Jogador';
   gameState.playerName = name;
   localStorage.setItem('player_name', name);
 
@@ -184,7 +179,6 @@ async function startLevel(level) {
     gameState.history = [];
     gameState.isWon = false;
 
-    // Atualizar UI
     currentPlayerDisplay.textContent = gameState.playerName;
     currentLevelBadge.textContent = `Nível ${data.level}`;
     attemptCountDisplay.textContent = '0';
@@ -201,27 +195,26 @@ async function startLevel(level) {
     victoryActions.classList.add('hidden');
     renderHistory();
 
-    setKuromiMood('thinking', `Estou pensando em um número de ${data.min} a ${data.max}... Qual o seu palpite, ${gameState.playerName}? 🎀`);
+    setMascotState('thinking', `Número sorteado entre ${data.min} e ${data.max}. Qual é o seu palpite?`);
 
     setupPanel.classList.add('hidden');
     playPanel.classList.remove('hidden');
 
     guessInput.focus();
   } catch (err) {
-    alert('Não foi possível iniciar o jogo: ' + err.message);
+    alert('Não foi possível iniciar a partida: ' + err.message);
   } finally {
     btnStart.disabled = false;
   }
 }
 
-// Enviar Palpite
 async function handleGuess(e) {
   e.preventDefault();
   const guess = parseInt(guessInput.value, 10);
   if (isNaN(guess)) return;
 
   if (guess < gameState.min || guess > gameState.max) {
-    showFeedback('warning', `⚠️ Digite um número válido entre ${gameState.min} e ${gameState.max}!`);
+    showFeedback('warning', `Digite um número entre ${gameState.min} e ${gameState.max}.`, '⚠️');
     return;
   }
 
@@ -247,13 +240,13 @@ async function handleGuess(e) {
     renderHistory();
 
     if (data.status === 'higher') {
-      playTone(587.33, 'sine', 0.16); // Tom agudo
-      showFeedback('higher', `📈 O número secreto da Kuromi é MAIOR que ${guess}. Tente novamente!`, '📈');
-      setKuromiMood('higher', `Hihi! O número que eu escolhi é MAIOR que ${guess}! 🖤`);
+      playTone(587.33, 'sine', 0.16);
+      showFeedback('higher', `O número secreto é MAIOR que ${guess}.`, '📈');
+      setMascotState('higher');
     } else if (data.status === 'lower') {
-      playTone(293.66, 'sine', 0.16); // Tom grave
-      showFeedback('lower', `📉 O número secreto da Kuromi é MENOR que ${guess}. Tente novamente!`, '📉');
-      setKuromiMood('lower', `Quase! O número secreto é MENOR que ${guess}! Chute mais baixo! 🎀`);
+      playTone(293.66, 'sine', 0.16);
+      showFeedback('lower', `O número secreto é MENOR que ${guess}.`, '📉');
+      setMascotState('lower');
     } else if (data.status === 'correct') {
       handleVictory(data);
     }
@@ -263,7 +256,7 @@ async function handleGuess(e) {
       guessInput.focus();
     }
   } catch (err) {
-    showFeedback('warning', 'Erro: ' + err.message);
+    showFeedback('warning', err.message, '⚠️');
   } finally {
     if (!gameState.isWon) {
       btnGuess.disabled = false;
@@ -271,7 +264,6 @@ async function handleGuess(e) {
   }
 }
 
-// Lidar com Vitória
 function handleVictory(data) {
   gameState.isWon = true;
   guessInput.disabled = true;
@@ -280,15 +272,13 @@ function handleVictory(data) {
   playWinSound();
   launchConfetti();
 
-  let victoryMsg = `🎉 Parabéns, ${gameState.playerName}! Você acertou o número secreto (${data.secretNumber}) em ${data.attempts} ${data.attempts === 1 ? 'tentativa' : 'tentativas'}!`;
+  let victoryMsg = `Você acertou o número ${data.secretNumber} em ${data.attempts} ${data.attempts === 1 ? 'tentativa' : 'tentativas'}!`;
   if (data.rankPosition) {
-    victoryMsg += ` 🏆 Você garantiu a posição #${data.rankPosition} no ranking do Neon!`;
+    victoryMsg += ` Posição no placar: #${data.rankPosition}.`;
   }
-  showFeedback('correct', victoryMsg, '🖤');
+  showFeedback('correct', victoryMsg, '🏆');
+  setMascotState('win');
 
-  setKuromiMood('win', `Aee! Você acertou em ${data.attempts} ${data.attempts === 1 ? 'tentativa' : 'tentativas'}! Já registrei seu recorde no Neon! 🖤✨`);
-
-  // Ajustar botão de próximo nível
   if (gameState.selectedLevel < 3) {
     btnNextLevel.classList.remove('hidden');
     btnNextLevel.querySelector('span').textContent = `Ir para Nível ${gameState.selectedLevel + 1}`;
@@ -297,60 +287,55 @@ function handleVictory(data) {
   }
 
   victoryActions.classList.remove('hidden');
-
-  // Recarrega ranking atualizado
   loadRanking();
 }
 
-// Próximo nível
 function handleNextLevel() {
   if (gameState.selectedLevel < 3) {
     startLevel(gameState.selectedLevel + 1);
   }
 }
 
-// Voltar para tela de setup
 function exitToSetup() {
   playPanel.classList.add('hidden');
   setupPanel.classList.remove('hidden');
-  setKuromiMood('start');
+  setMascotState('start');
   levelBtns.forEach(b => {
-    b.classList.toggle('active', parseInt(b.dataset.level, 10) === gameState.selectedLevel);
+    const isActive = parseInt(b.dataset.level, 10) === gameState.selectedLevel;
+    b.classList.toggle('active', isActive);
+    b.setAttribute('aria-checked', isActive ? 'true' : 'false');
   });
 }
 
-// Renderizar Histórico
 function renderHistory() {
   historyCount.textContent = `${gameState.history.length} ${gameState.history.length === 1 ? 'palpite' : 'palpites'}`;
   
   if (gameState.history.length === 0) {
-    historyList.innerHTML = '<div class="empty-history">Nenhum palpite enviado ainda.</div>';
+    historyList.innerHTML = '<span class="empty-history">Nenhum palpite enviado ainda.</span>';
     return;
   }
 
   historyList.innerHTML = gameState.history.map(item => {
-    let icon = '•';
-    if (item.status === 'higher') icon = '📈 Maior';
-    else if (item.status === 'lower') icon = '📉 Menor';
-    else if (item.status === 'correct') icon = '🖤 Acertou!';
+    let label = 'Igual';
+    if (item.status === 'higher') label = 'Maior';
+    else if (item.status === 'lower') label = 'Menor';
+    else if (item.status === 'correct') label = 'Acerto';
 
     return `
       <div class="history-pill ${item.status}">
         <span>${item.guess}</span>
-        <small>(${icon})</small>
+        <small>(${label})</small>
       </div>
     `;
   }).join('');
 }
 
-// Feedback
 function showFeedback(type, text, icon = '💡') {
   feedbackBox.className = `feedback-box ${type}`;
   feedbackIcon.textContent = icon;
   feedbackText.textContent = text;
 }
 
-// Carregar Ranking do Neon
 async function loadRanking() {
   try {
     let url = '/api/ranking';
@@ -366,8 +351,8 @@ async function loadRanking() {
   } catch (err) {
     rankingBody.innerHTML = `
       <tr>
-        <td colspan="4" class="ranking-loading" style="color: var(--pink-hot);">
-          Falha ao carregar ranking do Neon: ${err.message}
+        <td colspan="4" class="table-status">
+          Não foi possível carregar a classificação.
         </td>
       </tr>
     `;
@@ -378,8 +363,8 @@ function renderRankingTable(items) {
   if (!items || items.length === 0) {
     rankingBody.innerHTML = `
       <tr>
-        <td colspan="4" class="ranking-loading">
-          Nenhum registro ainda. Seja o primeiro a acertar e entrar para o Hall da Fama Kuromi! 🎀
+        <td colspan="4" class="table-status">
+          Nenhum registro encontrado para este nível.
         </td>
       </tr>
     `;
@@ -388,28 +373,22 @@ function renderRankingTable(items) {
 
   rankingBody.innerHTML = items.map((item, index) => {
     const pos = index + 1;
-    let posBadge = `${pos}º`;
-    let posClass = 'rank-pos';
-    if (pos === 1) { posBadge = '👑 1º'; posClass += ' pos-1'; }
-    else if (pos === 2) { posBadge = '🥈 2º'; posClass += ' pos-2'; }
-    else if (pos === 3) { posBadge = '🥉 3º'; posClass += ' pos-3'; }
-
-    const avatarLetter = (item.player_name || 'K').charAt(0).toUpperCase();
+    const initial = (item.player_name || 'J').charAt(0).toUpperCase();
 
     return `
       <tr>
-        <td class="${posClass}">${posBadge}</td>
+        <td class="rank-pos">${pos}º</td>
         <td>
-          <div class="player-col">
-            <span class="player-avatar">${avatarLetter}</span>
+          <div class="player-info">
+            <span class="player-badge" aria-hidden="true">${initial}</span>
             <span>${escapeHtml(item.player_name)}</span>
           </div>
         </td>
         <td>
-          <span class="level-chip lvl-${item.level}">Nível ${item.level}</span>
+          <span class="level-tag-sm">Nível ${item.level}</span>
         </td>
         <td>
-          <span class="attempts-badge">${item.attempts} ${item.attempts === 1 ? 'tentativa' : 'tentativas'}</span>
+          <span class="attempts-value">${item.attempts}</span>
         </td>
       </tr>
     `;
@@ -422,8 +401,11 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-// Confetti com cores da Kuromi (Hot Pink, Lilac, Soft Pink, White, Dark Violet)
 function launchConfetti() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    return;
+  }
+
   const canvas = document.getElementById('confetti-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
@@ -431,19 +413,19 @@ function launchConfetti() {
   canvas.height = window.innerHeight;
 
   const particles = [];
-  const colors = ['#ff4d8d', '#ff75a0', '#c084fc', '#ffd1dc', '#ffffff', '#2a1b32'];
+  const palette = ['#ff4d8d', '#ff659f', '#c084fc', '#fbcfe8', '#ffffff'];
 
-  for (let i = 0; i < 95; i++) {
+  for (let i = 0; i < 70; i++) {
     particles.push({
       x: canvas.width / 2,
       y: canvas.height / 2,
-      vx: (Math.random() - 0.5) * 16,
-      vy: (Math.random() - 0.7) * 16,
-      size: Math.random() * 9 + 4,
-      color: colors[Math.floor(Math.random() * colors.length)],
+      vx: (Math.random() - 0.5) * 14,
+      vy: (Math.random() - 0.7) * 14,
+      size: Math.random() * 8 + 4,
+      color: palette[Math.floor(Math.random() * palette.length)],
       alpha: 1,
       rotation: Math.random() * 360,
-      rotSpeed: (Math.random() - 0.5) * 10
+      rotSpeed: (Math.random() - 0.5) * 8
     });
   }
 
@@ -455,8 +437,8 @@ function launchConfetti() {
     particles.forEach(p => {
       p.x += p.vx;
       p.y += p.vy;
-      p.vy += 0.35;
-      p.alpha -= 0.012;
+      p.vy += 0.32;
+      p.alpha -= 0.014;
       p.rotation += p.rotSpeed;
 
       if (p.alpha > 0) {

@@ -8,11 +8,8 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-
-// Servir arquivos estáticos para desenvolvimento local
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-// Garantir inicialização do banco Neon em ambiente Serverless
 let dbReady = false;
 async function ensureDb() {
   if (!dbReady) {
@@ -26,8 +23,8 @@ app.use(async (req, res, next) => {
     await ensureDb();
     next();
   } catch (err) {
-    console.error('Erro de conexão ao banco Neon:', err);
-    res.status(500).json({ error: 'Erro de conexão com o banco de dados Neon.' });
+    console.error('Database connection error:', err);
+    res.status(500).json({ error: 'Erro de conexão com o banco de dados.' });
   }
 });
 
@@ -45,11 +42,10 @@ function getLevelConfig(level) {
   }
 }
 
-// Iniciar um novo jogo (persistido no Neon)
 app.post('/api/game/start', async (req, res) => {
   try {
     const { playerName, level } = req.body;
-    const name = (playerName && playerName.trim()) ? playerName.trim().substring(0, 50) : 'Fã da Kuromi';
+    const name = (playerName && playerName.trim()) ? playerName.trim().substring(0, 50) : 'Jogador';
     const config = getLevelConfig(level);
 
     const secretNumber = Math.floor(Math.random() * (config.max - config.min + 1)) + config.min;
@@ -80,17 +76,16 @@ app.post('/api/game/start', async (req, res) => {
       attempts: 0
     });
   } catch (err) {
-    console.error('Erro ao iniciar jogo:', err);
+    console.error('Game start error:', err);
     res.status(500).json({ error: 'Erro ao iniciar o jogo.' });
   }
 });
 
-// Enviar um palpite (validado via Neon)
 app.post('/api/game/guess', async (req, res) => {
   try {
     const { gameId, guess } = req.body;
     if (!gameId) {
-      return res.status(400).json({ error: 'ID da sessão de jogo não fornecido.' });
+      return res.status(400).json({ error: 'Sessão de jogo inválida.' });
     }
 
     const selectQuery = `
@@ -100,12 +95,12 @@ app.post('/api/game/guess', async (req, res) => {
     `;
     const gameResult = await pool.query(selectQuery, [gameId]);
     if (gameResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Partida não encontrada ou expirada. Inicie um novo jogo!' });
+      return res.status(404).json({ error: 'Partida não encontrada ou expirada.' });
     }
 
     const game = gameResult.rows[0];
     if (game.finished) {
-      return res.status(400).json({ error: 'Esta partida já foi encerrada. Inicie um novo jogo!' });
+      return res.status(400).json({ error: 'Esta partida já foi finalizada.' });
     }
 
     const guessNum = parseInt(guess, 10);
@@ -126,16 +121,14 @@ app.post('/api/game/guess', async (req, res) => {
 
     if (guessNum === game.secret_number) {
       status = 'correct';
-      hint = `🎉 Parabéns, ${game.player_name}! Você acertou o número secreto (${game.secret_number}) em ${newAttempts} ${newAttempts === 1 ? 'tentativa' : 'tentativas'}!`;
+      hint = `Parabéns, ${game.player_name}! Você acertou o número secreto (${game.secret_number}) em ${newAttempts} ${newAttempts === 1 ? 'tentativa' : 'tentativas'}!`;
       history.push({ guess: guessNum, status, hint });
 
-      // Atualizar active_games para finalizado
       await pool.query(
         `UPDATE active_games SET attempts = $1, history = $2, finished = true WHERE game_id = $3;`,
         [newAttempts, JSON.stringify(history), gameId]
       );
 
-      // Inserir no ranking de recordes
       const insertRankQuery = `
         INSERT INTO ranking_jogo_numeros (player_name, level, attempts, secret_number)
         VALUES ($1, $2, $3, $4)
@@ -148,7 +141,6 @@ app.post('/api/game/guess', async (req, res) => {
         game.secret_number
       ]);
 
-      // Calcular posição no ranking
       const rankPosQuery = `
         SELECT COUNT(*) as rank
         FROM ranking_jogo_numeros
@@ -167,15 +159,14 @@ app.post('/api/game/guess', async (req, res) => {
         attempts: newAttempts,
         secretNumber: game.secret_number,
         history,
-        rankPosition,
-        savedToNeon: true
+        rankPosition
       });
     } else if (guessNum < game.secret_number) {
       status = 'higher';
-      hint = `📈 O número secreto é MAIOR que ${guessNum}. Tente novamente!`;
+      hint = `O número secreto é MAIOR que ${guessNum}. Tente novamente!`;
     } else {
       status = 'lower';
-      hint = `📉 O número secreto é MENOR que ${guessNum}. Tente novamente!`;
+      hint = `O número secreto é MENOR que ${guessNum}. Tente novamente!`;
     }
 
     history.push({ guess: guessNum, status, hint });
@@ -192,12 +183,11 @@ app.post('/api/game/guess', async (req, res) => {
       history
     });
   } catch (err) {
-    console.error('Erro ao processar palpite:', err);
+    console.error('Guess processing error:', err);
     res.status(500).json({ error: 'Erro interno ao processar o palpite.' });
   }
 });
 
-// Ranking dos melhores jogadores
 app.get('/api/ranking', async (req, res) => {
   try {
     const level = req.query.level ? parseInt(req.query.level, 10) : null;
@@ -225,8 +215,8 @@ app.get('/api/ranking', async (req, res) => {
     const result = await pool.query(query, params);
     res.json({ ranking: result.rows });
   } catch (err) {
-    console.error('Erro ao consultar ranking no Neon:', err);
-    res.status(500).json({ error: 'Erro ao consultar o ranking no banco Neon.' });
+    console.error('Ranking query error:', err);
+    res.status(500).json({ error: 'Erro ao consultar o ranking.' });
   }
 });
 

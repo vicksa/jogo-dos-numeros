@@ -1,15 +1,21 @@
 {
   "name": "jogo-dos-numeros",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Jogo de adivinhação de números temático da Kuromi com ranking de recordes.",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --check server.js api/index.js db.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "jogo",
+    "kuromi",
+    "adivinhacao",
+    "postgres",
+    "nodejs"
+  ],
+  "author": "vicksa",
+  "license": "MIT",
   "dependencies": {
     "cors": "^2.8.6",
     "dotenv": "^18.0.10",

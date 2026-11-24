@@ -1,58 +1,67 @@
-# 🎲 Jogo dos Números
+# Jogo dos Números — Kuromi Edition
 
-Um jogo web moderno e interativo de adivinhação de números integrado ao banco de dados serverless **Neon PostgreSQL**, registrando e classificando os recordes de quem acertou o número secreto em menos tentativas!
+Aplicação web de adivinhação de números com temática visual da Kuromi, 3 níveis progressivos de dificuldade e registro persistente de recordes por tentativas em banco de dados PostgreSQL.
 
----
+## Funcionalidades
 
-## 🚀 Funcionalidades
+- **3 Níveis de Desafio**:
+  - Nível 1: Intervalo de 1 a 10
+  - Nível 2: Intervalo de 1 a 100
+  - Nível 3: Intervalo de 1 a 1000
+- **Lógica de Palpites**:
+  - Validação no servidor sem exposição do número sorteado no cliente.
+  - Indicadores comparativos (maior ou menor) a cada tentativa.
+  - Histórico de palpites da rodada.
+- **Placar de Recordes**:
+  - Persistência das partidas e ranking ordenado pelo menor número de tentativas.
+  - Filtros por nível e visão geral.
+- **Identidade Visual**:
+  - Tema inspirado na personagem Kuromi com expressões dinâmicas da mascote.
+  - Interface responsiva com suporte a redução de movimento (`prefers-reduced-motion`).
 
-- **3 Níveis de Dificuldade**:
-  - **Nível 1 (Fácil)**: Números de `1 a 10`
-  - **Nível 2 (Médio)**: Números de `1 a 100`
-  - **Nível 3 (Difícil)**: Números de `1 a 1000`
-- **Mecânica de Jogo Inteligente**:
-  - O backend randomiza o número secreto e não revela ao jogador.
-  - A cada palpite, a aplicação informa se o número secreto é **MAIOR** ou **MENOR** que o valor digitado.
-  - Histórico visual de tentativas com badges indicando as dicas.
-  - Efeitos sonoros dinâmicos sintetizados via Web Audio API e animação de confetes ao vencer.
-- **Hall da Fama (Neon Postgres)**:
-  - Registra automaticamente no banco Neon o nome do jogador, o nível, a quantidade de tentativas e a data.
-  - Ranking em tempo real filtrável por nível ou classificação geral (os jogadores com menos tentativas ficam no topo).
+## Requisitos
 
----
+- Node.js 18 ou superior
+- Instância PostgreSQL (local ou em nuvem)
 
-## 🛠️ Tecnologias Utilizadas
+## Instalação e Execução Local
 
-- **Backend**: Node.js & Express
-- **Banco de Dados**: [Neon Serverless PostgreSQL](https://neon.com/) (`pg`)
-- **Frontend**: HTML5, CSS3 moderno (Glassmorphism & Neon theme), JavaScript Vanilla
-- **Áudio & Efeitos**: Web Audio API & HTML5 Canvas
+1. Instale as dependências:
+   ```bash
+   npm install
+   ```
 
----
+2. Configure as variáveis de ambiente criando um arquivo `.env` com base no `.env.example`:
+   ```env
+   DATABASE_URL=postgresql://usuario:senha@host/neondb?sslmode=require
+   PORT=3000
+   ```
 
-## ⚙️ Instalação e Execução
+3. Inicie a aplicação:
+   ```bash
+   npm start
+   ```
 
-### 1. Clonar o repositório
-```bash
-git clone https://github.com/vicksa/jogo-dos-numeros.git
-cd jogo-dos-numeros
+4. Acesse pelo navegador em `http://localhost:3000`.
+
+## Estrutura do Projeto
+
+```text
+├── api/
+│   └── index.js       # Endpoints e lógica da API (compatível com serverless)
+├── public/
+│   ├── assets/        # Imagens da mascote
+│   ├── favicon.svg    # Ícone da aplicação
+│   ├── index.html     # Marcação semântica
+│   ├── robots.txt     # Diretivas de rastreamento
+│   ├── script.js      # Lógica de interface e interações
+│   └── style.css      # Folha de estilos e acessibilidade
+├── db.js              # Inicialização do pool PostgreSQL e tabelas
+├── package.json       # Metadados e dependências
+├── server.js          # Ponto de entrada do servidor HTTP local
+└── vercel.json        # Configuração de rotas para deploy
 ```
 
-### 2. Instalar as dependências
-```bash
-npm install
-```
+## Licença
 
-### 3. Configurar as variáveis de ambiente
-Crie um arquivo `.env` na raiz do projeto baseado no `.env.example`:
-```env
-DATABASE_URL=postgresql://usuario:senha@ep-exemplo.aws.neon.tech/neondb?sslmode=require
-PORT=3000
-```
-
-### 4. Iniciar a aplicação
-```bash
-npm start
-```
-
-Abra seu navegador em [http://localhost:3000](http://localhost:3000).
+MIT
